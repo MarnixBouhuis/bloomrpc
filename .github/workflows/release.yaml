@@ -54,8 +54,8 @@ jobs:
           result-encoding: string
           script: |
             const release = await github.request('GET /repos/{owner}/{repo}/releases/latest', {
-              owner: "",
-              repo: "",
+              owner: context.repo.owner,
+              repo: context.repo.repo,
             });
             console.log(release);
             return release.tag_name;
