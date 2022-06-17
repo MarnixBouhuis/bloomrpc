@@ -1,0 +1,74 @@
+# This workflow manages the creation of draft releases.
+# It is triggered when something pushes to master.
+# First, it will build the app.
+# Then, it will check if there is already a draft PR open:
+#   If there is no draft release open it will create a new one.
+#   If there already is a draft PR open it will update this release.
+# It will then check what the last release was that is not a draft release and get a summary of all commits between
+# that release and the current commit and add this list to the description of the draft release.
+# It then adds the build artifacts to the release.
+
+# You can then manually release this release by publishing the draft release.
+
+
+name: Create draft release
+on:
+  push:
+    branches:
+      - master
+# Only run one release pipeline at a time, otherwise we might get weird issues were two pipelines are editing the same release
+concurrency:
+  group: create-draft-release
+jobs:
+  build:
+    name: Build application
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Read .nvmrc file
+        id: read_nvmrc_file
+        run: echo "::set-output name=node_version::$(cat .nvmrc)"
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ steps.read_nvmrc_file.node_version }}
+      - name: Install dependencies
+        run: yarn install
+      - name: Build application
+        run: npm run package-all
+  create_draft_release_if_needed:
+    name: Create draft release if needed
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create new draft PR if there is none
+        run: ""
+  update_draft_release_description:
+    name: Update draft release description
+    runs-on: ubuntu-latest
+    needs: [ "create_draft_release_if_needed" ]
+    steps:
+      - name: Get the last released tag
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            const release = await github.request('GET /repos/{owner}/{repo}/releases/latest', {
+              owner: "",
+              repo: "",
+            });
+            console.log(release);
+            return release.tag_name;
+      - name: Checkout repository since the last released tag
+        run: ""
+      - name: Get commits since last released tag
+        run: ""
+      - name: Update draft release description
+        run: ""
+  update_draft_release_artifacts:
+    name: Update draft release artifacts
+    runs-on: ubuntu-latest
+    needs: [ "create_draft_release_if_needed", "build" ]
+    steps:
+      - name: Update draft release artifacts
+        run: ""
